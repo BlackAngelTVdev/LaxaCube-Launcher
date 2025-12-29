@@ -24,6 +24,7 @@ function createWindow() {
     destroyWindow();
     mainWindow = new BrowserWindow({
         title: pkg.preductname,
+        // Vous pouvez garder width/height comme valeurs par défaut si l'utilisateur réduit la fenêtre
         width: 1280,
         height: 720,
         minWidth: 980,
@@ -31,19 +32,25 @@ function createWindow() {
         resizable: true,
         icon: `./src/assets/images/icon.${os.platform() === "win32" ? "ico" : "png"}`,
         frame: false,
-        show: false,
+        show: false, // Garder à false pour éviter le flash blanc
         webPreferences: {
             contextIsolation: false,
             nodeIntegration: true
         },
     });
+
     Menu.setApplicationMenu(null);
     mainWindow.setMenuBarVisibility(false);
+    
+    // ACTION : Maximiser avant d'afficher
+    mainWindow.maximize(); 
+
     mainWindow.loadFile(path.join(`${app.getAppPath()}/src/launcher.html`));
+    
     mainWindow.once('ready-to-show', () => {
         if (mainWindow) {
-            if (dev) mainWindow.webContents.openDevTools({ mode: 'detach' })
-            mainWindow.show()
+            if (dev) mainWindow.webContents.openDevTools({ mode: 'detach' });
+            mainWindow.show();
         }
     });
 }
