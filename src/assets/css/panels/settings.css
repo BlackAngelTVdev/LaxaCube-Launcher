@@ -41,7 +41,10 @@
     margin: 0.5rem 0;
     cursor: pointer;
 }
-
+.nav-settings-btn:active {
+    transform: scale(0.95);
+    transition: transform 0.1s;
+}
 .active-settings-BTN {
     background: var(--element-color);
 }
@@ -54,9 +57,16 @@
     right: 0;
     width: 80%;
     height: calc(100% - 26px);
+    
+    /* État invisible */
     opacity: 0;
     pointer-events: none;
-
+    transform: scale(0.98) translateY(10px);
+    transition: 
+        opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    will-change: opacity, transform;
 }
 
 .settings-elements-box {
@@ -75,8 +85,8 @@
     opacity: 1;
     z-index: 1;
     pointer-events: all;
+    transform: scale(1) translateY(0); 
 }
-
 .titre-tab {
     display: flex;
     justify-content: center;
