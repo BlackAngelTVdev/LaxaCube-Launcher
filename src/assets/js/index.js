@@ -32,45 +32,39 @@ class Splash {
 
   async startAnimation() {
     let splashes = [
-      [
-        {
-          message: "Laxacube : Plus de cubes, moins de sommeil.",
-          author: "BlackAngel_TV_",
-        },
-        {
-          message: "Si ça lag, c'est que c'est une feature.",
-          author: "Zarroc",
-        },
-        {
-          message: "Le premier qui trouve un bug gagne... ma reconnaissance.",
-          author: "BlackAngel_TV_",
-        },
-        {
-          message:
-            "On ne dit pas 'Anti-Cheat', on dit 'Arbitre de la physique'.",
-          author: "Laxacube",
-        },
-        {
-          message: "Manger, dormir, Laxacube, recommencer.",
-          author: "BlackAngel_TV_",
-        },
-        {
-          message: "Le diamant, c'est surfait. Vive la Netherite.",
-          author: "Laxacube",
-        },
-        {
-          message: "Pourquoi sortir quand on peut miner chez nous ?",
-          author: "BlackAngel_TV_",
-        },
-        {
-          message: "Chargement des chunks... et de vos espoirs.",
-          author: "Console",
-        },
-        {
-          message: "Laxacube ne crash pas, il fait une pause méditative.",
-          author: "BlackAngel_TV_",
-        },
-      ],
+      {
+        message: "Laxacube : Plus de cubes, moins de sommeil.",
+        author: "BlackAngel_TV_",
+      },
+      { message: "Si ça lag, c'est que c'est une feature.", author: "Zarroc" },
+      {
+        message: "Le premier qui trouve un bug gagne... ma reconnaissance.",
+        author: "BlackAngel_TV_",
+      },
+      {
+        message: "On ne dit pas 'Anti-Cheat', on dit 'Arbitre de la physique'.",
+        author: "Laxacube",
+      },
+      {
+        message: "Manger, dormir, Laxacube, recommencer.",
+        author: "BlackAngel_TV_",
+      },
+      {
+        message: "Le diamant, c'est surfait. Vive la Netherite.",
+        author: "Laxacube",
+      },
+      {
+        message: "Pourquoi sortir quand on peut miner chez nous ?",
+        author: "BlackAngel_TV_",
+      },
+      {
+        message: "Chargement des chunks... et de vos espoirs.",
+        author: "Console",
+      },
+      {
+        message: "Laxacube ne crash pas, il fait une pause méditative.",
+        author: "BlackAngel_TV_",
+      },
     ];
     let splash = splashes[Math.floor(Math.random() * splashes.length)];
     this.splashMessage.textContent = splash.message;
