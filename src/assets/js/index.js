@@ -50,7 +50,7 @@ class Splash {
         author: "BlackAngel_TV_",
       },
       {
-        message: "Le diamant, c'est surfait. Vive la Netherite.",
+        message: "Le diamant, c'est surfait. Vive la Sudime.",
         author: "Laxacube",
       },
       {
