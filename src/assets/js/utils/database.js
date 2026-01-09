@@ -1,33 +1,21 @@
 /**
  * @author Luuxis
- * Luuxis License v1.0
+ * Luuxis License v1.0 (voir fichier LICENSE pour les détails en FR/EN)
  */
 
 const { NodeBDD, DataType } = require('node-bdd');
-const nodedatabase = new NodeBDD();
-const { ipcRenderer } = require('electron');
-const path = require('path');
+const nodedatabase = new NodeBDD()
+const { ipcRenderer } = require('electron')
 
-const dev = process.env.NODE_ENV === 'dev';
+let dev = process.env.NODE_ENV === 'dev';
 
 class database {
-    /**
-     * Initialise la base de données de manière robuste
-     */
     async creatDatabase(tableName, tableConfig) {
-        // On demande au processus Main le chemin autorisé
-        const userDataPath = await ipcRenderer.invoke('path-user-data');
-        
-        // On définit le dossier de stockage (évite les erreurs de slashs)
-        const storagePath = dev 
-            ? path.join(userDataPath, '..', '..') 
-            : path.join(userDataPath, 'databases');
-
         return await nodedatabase.intilize({
-            databaseName: 'LauncherData',
+            databaseName: 'Databases',
             fileType: dev ? 'sqlite' : 'db',
             tableName: tableName,
-            path: storagePath,
+            path: `${await ipcRenderer.invoke('path-user-data')}${dev ? '../..' : '/databases'}`,
             tableColumns: tableConfig,
         });
     }
@@ -39,49 +27,44 @@ class database {
     }
 
     async createData(tableName, data) {
-        const table = await this.getDatabase(tableName);
-        const result = await nodedatabase.createData(table, { 
-            json_data: JSON.stringify(data) 
-        });
-        
-        const finalData = JSON.parse(result.json_data);
-        finalData.ID = result.id;
-        return finalData;
+        let table = await this.getDatabase(tableName);
+        data = await nodedatabase.createData(table, { json_data: JSON.stringify(data) })
+        let id = data.id
+        data = JSON.parse(data.json_data)
+        data.ID = id
+        return data
     }
 
     async readData(tableName, key = 1) {
-        const table = await this.getDatabase(tableName);
-        const data = await nodedatabase.getDataById(table, key);
-        
+        let table = await this.getDatabase(tableName);
+        let data = await nodedatabase.getDataById(table, key)
         if (data) {
-            const parsed = JSON.parse(data.json_data);
-            parsed.ID = data.id;
-            return parsed;
+            let id = data.id
+            data = JSON.parse(data.json_data)
+            data.ID = id
         }
-        return undefined;
+        return data ? data : undefined
     }
 
     async readAllData(tableName) {
-        const table = await this.getDatabase(tableName);
-        const data = await nodedatabase.getAllData(table);
-        
+        let table = await this.getDatabase(tableName);
+        let data = await nodedatabase.getAllData(table)
         return data.map(info => {
-            const parsed = JSON.parse(info.json_data);
-            parsed.ID = info.id;
-            return parsed;
-        });
+            let id = info.id
+            info = JSON.parse(info.json_data)
+            info.ID = id
+            return info
+        })
     }
 
     async updateData(tableName, data, key = 1) {
-        const table = await this.getDatabase(tableName);
-        await nodedatabase.updateData(table, { 
-            json_data: JSON.stringify(data) 
-        }, key);
+        let table = await this.getDatabase(tableName);
+        await nodedatabase.updateData(table, { json_data: JSON.stringify(data) }, key)
     }
 
     async deleteData(tableName, key = 1) {
-        const table = await this.getDatabase(tableName);
-        await nodedatabase.deleteData(table, key);
+        let table = await this.getDatabase(tableName);
+        await nodedatabase.deleteData(table, key)
     }
 }
 
