@@ -11,7 +11,7 @@
 ---
 
 ## 🧐 Aperçu
-![Main menu](https://postimg.cc/1gm7kRBB)
+![Main menu](https://i.postimg.cc/GpG0sHsW/Capture-d-ecran-2026-01-09-143551.png)
 
 ## ✨ Fonctionnalités
 
