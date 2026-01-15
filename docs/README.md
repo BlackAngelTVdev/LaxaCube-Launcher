@@ -43,14 +43,14 @@
     ```
 3. **Configurer les variables d'environnement**
    ```
-   "icon": "node build.js --icon=[https://votre-url-image.png](https://votre-url-image.png)"
+   "icon": "node build.js --icon=https://votre-url-image.png"
    ```
    ```
    "repository": {
-    "url": "git+[https://github.com/VOTRE_NOM/VOTRE_REPO.git](https://github.com/VOTRE_NOM/VOTRE_REPO.git)"}
+    "url": "git+https://github.com/VOTRE_NOM/VOTRE_REPO.git"}
    ```
    ```
-    "url": "[https://votre-site.com](https://votre-site.com)"
+    "url": "https://votre-site.com"
    ```
 5. **Lancer l'application**
    ```
