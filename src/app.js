@@ -15,13 +15,22 @@ const MainWindow = require("./assets/js/windows/mainWindow.js");
 
 let dev = process.env.NODE_ENV === 'dev';
 
+function getSharedDataPaths() {
+    const basePath = path.join(app.getPath('appData'), 'LaxaCube Launcher Data');
+    const userDataPath = path.join(basePath, 'Launcher');
+    if (!fs.existsSync(basePath)) fs.mkdirSync(basePath, { recursive: true });
+    if (!fs.existsSync(userDataPath)) fs.mkdirSync(userDataPath, { recursive: true });
+    return { basePath, userDataPath };
+}
+
 if (dev) {
-    let appPath = path.resolve('./data/Launcher').replace(/\\/g, '/');
-    let appdata = path.resolve('./data').replace(/\\/g, '/');
-    if (!fs.existsSync(appPath)) fs.mkdirSync(appPath, { recursive: true });
-    if (!fs.existsSync(appdata)) fs.mkdirSync(appdata, { recursive: true });
-    app.setPath('userData', appPath);
-    app.setPath('appData', appdata)
+    const sharedPaths = getSharedDataPaths();
+    app.setPath('userData', sharedPaths.userDataPath);
+    app.setPath('appData', sharedPaths.basePath)
+} else {
+    const sharedPaths = getSharedDataPaths();
+    app.setPath('userData', sharedPaths.userDataPath);
+    app.setPath('appData', sharedPaths.basePath)
 }
 
 if (!app.requestSingleInstanceLock()) app.quit();

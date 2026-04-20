@@ -15,6 +15,7 @@ const { AZauth, Microsoft, Mojang } = require('minecraft-java-core');
 const { ipcRenderer } = require('electron');
 const fs = require('fs');
 const os = require('os');
+const path = require('path');
 
 class Launcher {
     async init() {
@@ -134,11 +135,28 @@ class Launcher {
         let account_selected = configClient ? configClient.account_selected : null
         let popupRefresh = new popup();
 
+        if (!accounts?.length) {
+            const rememberedSession = await this.readRememberSession()
+            if (rememberedSession?.account) {
+                const restoredAccount = await this.db.createData('accounts', rememberedSession.account)
+                if (configClient) {
+                    configClient.account_selected = restoredAccount.ID
+                    if (rememberedSession.instance_select) configClient.instance_select = rememberedSession.instance_select
+                    await this.db.updateData('configClient', configClient)
+                }
+                accounts = await this.db.readAllData('accounts')
+                configClient = await this.db.readData('configClient')
+                account_selected = configClient ? configClient.account_selected : null
+            }
+        }
+
         if (accounts?.length) {
             for (let account of accounts) {
                 let account_ID = account.ID
                 if (account.error) {
-                    await this.db.deleteData('accounts', account_ID)
+                    // Ne pas supprimer automatiquement: certains providers renvoient un flag error transitoire.
+                    await addAccount(account)
+                    if (account_ID == account_selected) accountSelect(account)
                     continue
                 }
                 if (account.meta.type === 'Xbox') {
@@ -153,12 +171,10 @@ class Launcher {
                     let refresh_accounts = await new Microsoft(this.config.client_id).refresh(account);
 
                     if (refresh_accounts.error) {
-                        await this.db.deleteData('accounts', account_ID)
-                        if (account_ID == account_selected) {
-                            configClient.account_selected = null
-                            await this.db.updateData('configClient', configClient)
-                        }
                         console.error(`[Account] ${account.name}: ${refresh_accounts.errorMessage}`);
+                        // Conserver le compte local en cas d'erreur de refresh transitoire.
+                        await addAccount(account)
+                        if (account_ID == account_selected) accountSelect(account)
                         continue;
                     }
 
@@ -177,17 +193,14 @@ class Launcher {
                     let refresh_accounts = await new AZauth(this.config.online).verify(account);
 
                     if (refresh_accounts.error) {
-                        this.db.deleteData('accounts', account_ID)
-                        if (account_ID == account_selected) {
-                            configClient.account_selected = null
-                            this.db.updateData('configClient', configClient)
-                        }
                         console.error(`[Account] ${account.name}: ${refresh_accounts.message}`);
+                        await addAccount(account)
+                        if (account_ID == account_selected) accountSelect(account)
                         continue;
                     }
 
                     refresh_accounts.ID = account_ID
-                    this.db.updateData('accounts', refresh_accounts, account_ID)
+                    await this.db.updateData('accounts', refresh_accounts, account_ID)
                     await addAccount(refresh_accounts)
                     if (account_ID == account_selected) accountSelect(refresh_accounts)
                 } else if (account.meta.type == 'Mojang') {
@@ -203,7 +216,7 @@ class Launcher {
 
                         refresh_accounts.ID = account_ID
                         await addAccount(refresh_accounts)
-                        this.db.updateData('accounts', refresh_accounts, account_ID)
+                        await this.db.updateData('accounts', refresh_accounts, account_ID)
                         if (account_ID == account_selected) accountSelect(refresh_accounts)
                         continue;
                     }
@@ -211,26 +224,20 @@ class Launcher {
                     let refresh_accounts = await Mojang.refresh(account);
 
                     if (refresh_accounts.error) {
-                        this.db.deleteData('accounts', account_ID)
-                        if (account_ID == account_selected) {
-                            configClient.account_selected = null
-                            this.db.updateData('configClient', configClient)
-                        }
                         console.error(`[Account] ${account.name}: ${refresh_accounts.errorMessage}`);
+                        await addAccount(account)
+                        if (account_ID == account_selected) accountSelect(account)
                         continue;
                     }
 
                     refresh_accounts.ID = account_ID
-                    this.db.updateData('accounts', refresh_accounts, account_ID)
+                    await this.db.updateData('accounts', refresh_accounts, account_ID)
                     await addAccount(refresh_accounts)
                     if (account_ID == account_selected) accountSelect(refresh_accounts)
                 } else {
                     console.error(`[Account] ${account.name}: Account Type Not Found`);
-                    this.db.deleteData('accounts', account_ID)
-                    if (account_ID == account_selected) {
-                        configClient.account_selected = null
-                        this.db.updateData('configClient', configClient)
-                    }
+                    await addAccount(account)
+                    if (account_ID == account_selected) accountSelect(account)
                 }
             }
 
@@ -243,13 +250,17 @@ class Launcher {
                 if (uuid) {
                     configClient.account_selected = uuid
                     await this.db.updateData('configClient', configClient)
-                    accountSelect(uuid)
+                    accountSelect(accounts[0])
+                    await this.saveRememberSession(accounts[0], configClient)
                 }
+            } else {
+                const selectedAccount = accounts.find(account => account.ID == account_selected)
+                if (selectedAccount) await this.saveRememberSession(selectedAccount, configClient)
             }
 
             if (!accounts.length) {
-                config.account_selected = null
-                await this.db.updateData('configClient', config);
+                configClient.account_selected = null
+                await this.db.updateData('configClient', configClient);
                 popupRefresh.closePopup()
                 return changePanel("login");
             }
@@ -259,6 +270,37 @@ class Launcher {
         } else {
             popupRefresh.closePopup()
             changePanel('login');
+        }
+    }
+
+    async readRememberSession() {
+        try {
+            const userDataPath = await ipcRenderer.invoke('path-user-data')
+            const rememberPath = path.join(userDataPath, 'remember-session.json')
+            if (!fs.existsSync(rememberPath)) return null
+            const content = fs.readFileSync(rememberPath, 'utf8')
+            const parsed = JSON.parse(content)
+            if (!parsed || !parsed.account) return null
+            return parsed
+        } catch (error) {
+            console.error('[remember-session] read failed:', error)
+            return null
+        }
+    }
+
+    async saveRememberSession(account, configClient) {
+        try {
+            const userDataPath = await ipcRenderer.invoke('path-user-data')
+            const rememberPath = path.join(userDataPath, 'remember-session.json')
+            const payload = {
+                account,
+                account_selected: configClient?.account_selected ?? account?.ID ?? null,
+                instance_select: configClient?.instance_select ?? null,
+                updated_at: Date.now()
+            }
+            fs.writeFileSync(rememberPath, JSON.stringify(payload, null, 2), 'utf8')
+        } catch (error) {
+            console.error('[remember-session] save failed:', error)
         }
     }
 }

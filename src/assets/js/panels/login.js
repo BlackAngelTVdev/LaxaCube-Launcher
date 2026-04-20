@@ -4,6 +4,8 @@
  */
 const { AZauth, Mojang } = require('minecraft-java-core');
 const { ipcRenderer } = require('electron');
+const fs = require('fs');
+const path = require('path');
 
 import { popup, database, changePanel, accountSelect, addAccount, config, setStatus } from '../utils.js';
 
@@ -212,9 +214,26 @@ class Login {
         }
 
         await this.db.updateData('configClient', configClient);
+        await this.saveRememberSession(account, configClient)
         await addAccount(account);
         await accountSelect(account);
         changePanel('home');
+    }
+
+    async saveRememberSession(account, configClient) {
+        try {
+            const userDataPath = await ipcRenderer.invoke('path-user-data')
+            const rememberPath = path.join(userDataPath, 'remember-session.json')
+            const payload = {
+                account,
+                account_selected: configClient?.account_selected ?? account?.ID ?? null,
+                instance_select: configClient?.instance_select ?? null,
+                updated_at: Date.now()
+            }
+            fs.writeFileSync(rememberPath, JSON.stringify(payload, null, 2), 'utf8')
+        } catch (error) {
+            console.error('[remember-session] save failed:', error)
+        }
     }
 }
 export default Login;
