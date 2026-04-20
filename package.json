@@ -1,7 +1,7 @@
 {
     "name": "LaxaCube-Launcher",
     "productName": "LaxaCube Launcher",
-    "version": "2.1.9",
+    "version": "2.1.10",
     "description": "Launcher Minecraft pour le serveur LaxaCube",
     "main": "src/app.js",
     "author": {
